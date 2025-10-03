@@ -1,0 +1,156 @@
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
+import { useWebinarStore } from '@/store/useWebinarStore'
+import { CtaTypeEnum } from '@prisma/client'
+
+import { Search, X } from 'lucide-react'
+import React, { useState } from 'react'
+import Stripe from 'stripe'
+
+type Props = {stripeProducts: Stripe.Product[] | []}
+
+function CTAStep({stripeProducts}: Props) {
+    const {formData, updateCtaField, addTag, removeTag, getStepValidationErrors} = useWebinarStore()
+    const {ctaLabel, tags, aiAgent, priceId, ctaType} = formData.cta
+    const errors = getStepValidationErrors('cta')
+   const handleChange = (e:  React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    
+    const {name, value} = e.target
+    updateCtaField(name as keyof typeof formData.cta, value)
+   }
+   const [tagInput, setTagInput] = useState('');
+   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && tagInput.trim()) {
+        e.preventDefault();
+        addTag(tagInput.trim());
+        setTagInput("");
+    }
+   }
+   const handleSelectCtaType = (value: CtaTypeEnum) => {
+    updateCtaField('ctaType', value)
+   }
+   const handleProductChange = (value: string) => {
+    updateCtaField('priceId', value)
+   }
+    return (
+    <div className='space-y-6'>
+         <div className='space-y-2'>
+            <Label
+            htmlFor='ctaLabel'
+            className={errors.ctaLabel ? "text-red-400" : ""}
+
+            >
+                CTA Label <span className='text-red-400'>*</span>
+
+            </Label>
+            <Input
+             id="ctaLabel"
+             name="ctaLabel"
+             value={ctaLabel}
+             onChange={handleChange}
+             placeholder="Enter CTA label"
+             className={cn('!bg-background/50 border border-input ', errors.ctaLabel && 'border-red-400 focus-visible:ring-red-400')}
+            />
+            {errors.ctaLabel && (
+                <p className='text-sm text-red-400'>{errors.ctaLabel}</p>
+            )}
+         </div >
+
+         <div className='space-y-2'>
+            <Label htmlFor="tags">Tags</Label>
+            <Input id="tags" value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)
+
+            } 
+            onKeyDown={handleAddTag}
+            placeholder="Add tags and press Enter"
+            className='!bg-background/50 border border-input'
+
+            />
+            {tags && tags.length > 0 && (
+                <div className='flex flex-wrap gap-2 mt-2'>
+                    {tags.map((tag: string, index: number) => (
+                      <div
+                      key={index} className='flex items-center gap-1 bg-gray-800 text-white px-3 py-1 rounded-md'
+                      >
+                       {tag}
+                  <button onClick={() => removeTag(tag)} className='text-gray-400 hover:text-white'>
+                    <X className='h-3 w-3' />
+                  </button>
+                      </div>  
+                    ))}
+                </div>
+            )}
+         </div>
+
+
+         <div className='space-y-2 w-full'>
+           <Label>CTA Type</Label>
+           <Tabs defaultValue={CtaTypeEnum.BOOK_A_CALL} className='w-full bg-transparent'>
+            <TabsList className='w-full bg-transparent'>
+                <TabsTrigger value={CtaTypeEnum.BOOK_A_CALL} className='w-1/2 data-[state=active]:!bg-background/50' 
+                onClick={() => handleSelectCtaType(CtaTypeEnum.BOOK_A_CALL)}
+                >
+                    Pitch Review
+                </TabsTrigger>
+                <TabsTrigger value={CtaTypeEnum.BUY_NOW}
+                className='w-1/2'
+                onClick={() => handleSelectCtaType(CtaTypeEnum.BUY_NOW)}
+                >
+Consultation      
+                </TabsTrigger>
+            </TabsList>
+             
+           </Tabs>
+         </div>
+<div className='mb-2'>
+<div className='relative'>
+<Search className='absolute left-3 top-2.5 h-4 w-4 text-gray-500'/>
+<Input placeholder='Search agents' className='pl-9 !bg-background/50 border border-input'/>
+
+</div>
+</div>
+        {/* <div className="space-y-2">
+          <Label>Attach an product</Label>
+          <div className='relative'>
+<div className='mb-2'>
+<div className='relative'>
+<Search className='absolute left-3 top-2.5 h-4 w-4 text-gray-500'/>
+<Input placeholder='Search agents' className='pl-9 !bg-background/50 border border-input'/>
+
+</div>
+</div>
+<Select 
+value={priceId}
+onValueChange={handleProductChange}
+>
+  <SelectTrigger className='w-full !bg-background/50 border border-input'>
+<SelectValue placeholder="Select a product" />
+  </SelectTrigger>
+   <SelectContent className='bg-background border border-input max-h-48'>
+    {stripeProducts?.length > 0 ? (
+   stripeProducts.map((product) => (
+    <SelectItem key={product.id} value={product?.default_price?.toString() || ''}
+    className='!bg-background/50 hover:!bg-white/10'>
+      {product.name}
+    </SelectItem>
+   ))
+    ):(
+<SelectItem value="none" disabled>
+Create product in Stripe
+</SelectItem>
+    )}
+
+   </SelectContent>
+</Select>
+          </div>
+          </div>*/}
+
+    </div>
+  )
+}
+
+export default CTAStep
